@@ -1,0 +1,37 @@
+name: Build and verify combined installer
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            runner: macos-15
+          - arch: x86_64
+            runner: macos-15-intel
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Fetch checksum-pinned component releases and build
+        run: |
+          python3 fetch-components.py
+          ./build.sh
+          './build/DCP-J315W Setup.app/Contents/MacOS/DCPJ315WSetup' --self-test
+          ./build-installer.sh --unsigned
+      - name: Read-only payload and component selection checks
+        run: python3 tests/test_package.py dist/*-unsigned.pkg
+      - name: Real installation, upgrade and selective removal
+        run: sudo env GITHUB_ACTIONS=true "$(command -v python3)" tests/test_install.py dist/*-unsigned.pkg
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: macos-${{ matrix.arch }}-unsigned-verification
+          path: dist/*-unsigned.pkg
+          if-no-files-found: error

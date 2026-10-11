@@ -1,0 +1,14 @@
+{
+  "printing": {
+    "repository": "SolenMusic/dcp-j315w-cups",
+    "version": "0.1.1",
+    "asset": "dcp-j315w-cups-0.1.1-macos-universal.pkg",
+    "sha256": "9d1bda6c868c284f385c33dba9aa9998fbd0a5c8fb9c2d3d508712e06071a8d4"
+  },
+  "scanning": {
+    "repository": "SolenMusic/dcp-j315w-scan",
+    "version": "0.1.0",
+    "asset": "dcp-j315w-scan-macos-universal-0.1.0.tar.gz",
+    "sha256": "67c1406a21c785d584fc25506e86f1a097441c6f35e24b97fbfd0d81868404de"
+  }
+}

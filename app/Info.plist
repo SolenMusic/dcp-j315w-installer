@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleIdentifier</key><string>org.dcpj315w.installer.setup</string>
+<key>CFBundleName</key><string>DCP-J315W Setup</string>
+<key>CFBundleExecutable</key><string>DCPJ315WSetup</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+<key>CFBundleShortVersionString</key><string>0.1.0</string>
+<key>CFBundleVersion</key><string>0.1.0</string>
+<key>LSMinimumSystemVersion</key><string>11.0</string>
+<key>NSHighResolutionCapable</key><true/>
+<key>NSLocalNetworkUsageDescription</key><string>Find your DCP-J315W on the local network to configure printing and scanning.</string>
+<key>NSBonjourServices</key><array><string>_pdl-datastream._tcp</string></array>
+</dict></plist>
