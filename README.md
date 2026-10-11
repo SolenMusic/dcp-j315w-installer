@@ -16,6 +16,11 @@ Created with LLM-assisted coding. I hope this helps keep your printer and scanne
 useful for a while longer. Source is MIT licensed; each component retains its
 own MIT notice. This project is not affiliated with Brother.
 
+## Download v0.1.0
+
+[Download the universal signed and notarized macOS installer](https://github.com/SolenMusic/dcp-j315w-installer/releases/download/v0.1.0/dcp-j315w-installer-0.1.0-macos-universal.pkg).
+Checksums and release notes are on the [release page](https://github.com/SolenMusic/dcp-j315w-installer/releases/tag/v0.1.0).
+
 ## Included components
 
 | Capability | Printing | Scanning |
@@ -109,3 +114,8 @@ upgrades and removes the real packages **only on disposable GitHub macOS runners
 it refuses to run on a personal Mac. Test queues point to localhost port 9 and a
 held job is never printed. Physical printer/scanner operation is verified in the
 component projects; a combined-install dogfood check is still useful.
+
+The package install/upgrade/removal checks pass on both macOS GitHub runner CPUs.
+Native UI layout, invalid-address rejection and Bonjour discovery were checked on
+the development macOS 27 Mac. Privileged setup/removal through the GUI and a full
+combined-install dogfood scan/print remain user checks.
