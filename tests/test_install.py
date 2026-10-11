@@ -31,7 +31,10 @@ with tempfile.TemporaryDirectory() as tmp:
     assert printing.exists() and app.exists() and not scanner.exists()
     # Use localhost port 9; no physical printer and no printing occurs.
     cmd(str(printing/'configure.sh'),'--queue',queue,'--address','127.0.0.1','--port','9')
-    cmd('lpadmin','-p',foreign,'-E','-v','socket://127.0.0.1:9','-m','raw')
+    foreign_ppd=Path(tmp)/'foreign.ppd'
+    lines=Path('/Library/Printers/PPDs/Contents/Resources/DCP-J315W-CUPS.ppd').read_text().splitlines()
+    foreign_ppd.write_text('\n'.join('*cupsFilter: "application/vnd.cups-postscript 0 -"' if line.startswith('*cupsFilter:') else line for line in lines)+'\n')
+    cmd('lpadmin','-p',foreign,'-E','-v','socket://127.0.0.1:9','-P',str(foreign_ppd))
     cmd('lpadmin','-p',queue,'-o','PageSize=A5','-o','Resolution=600dpi','-o','ColorModel=Color')
     settings=cmd('lpoptions','-p',queue,'-l').stdout
     install(1,0)
