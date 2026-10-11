@@ -17,6 +17,7 @@ static NSString *appleQuote(NSString *s) { return [[s stringByReplacingOccurrenc
 @property NSMutableArray<NSNetService *> *services;
 @property NSMutableSet<NSString *> *found;
 @property BOOL busy;
+@property NSString *discoveryError;
 @end
 @implementation Setup
 - (NSTextField *)label:(NSString *)text {
@@ -69,26 +70,39 @@ static NSString *appleQuote(NSString *s) { return [[s stringByReplacingOccurrenc
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender { (void)sender; return YES; }
 - (void)find:(id)sender {
   (void)sender;
-  [self.browser stop]; self.services=[NSMutableArray array]; self.found=[NSMutableSet set];
+  [self.browser stop]; self.services=[NSMutableArray array]; self.found=[NSMutableSet set]; self.discoveryError=nil;
   self.status.stringValue=@"Looking for a DCP-J315W on your network…";
-  self.browser=[NSNetServiceBrowser new]; self.browser.delegate=self; [self.browser searchForServicesOfType:@"_pdl-datastream._tcp." inDomain:@"local."];
+  self.browser=[NSNetServiceBrowser new]; self.browser.delegate=self;
+  [self.browser scheduleInRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
+  [self.browser searchForServicesOfType:@"_pdl-datastream._tcp." inDomain:@"local."];
   NSNetServiceBrowser *current=self.browser;
   dispatch_after(dispatch_time(DISPATCH_TIME_NOW,8*NSEC_PER_SEC),dispatch_get_main_queue(),^{
     if (self.browser!=current) return;
     [current stop];
-    if (!self.found.count) self.status.stringValue=@"No DCP-J315W found. Check Wi-Fi and power, or enter its IPv4 address.";
+    if (!self.found.count) self.status.stringValue=self.discoveryError ?: @"No DCP-J315W found. Check Wi-Fi and power, or enter its IPv4 address.";
     else if (self.found.count>1) { self.address.stringValue=@""; self.status.stringValue=[NSString stringWithFormat:@"Several printers found: %@. Enter the address you want.",[[self.found allObjects] componentsJoinedByString:@", "]]; }
   });
 }
 - (void)netServiceBrowser:(NSNetServiceBrowser *)browser didFindService:(NSNetService *)service moreComing:(BOOL)more {
-  (void)browser; (void)more; [self.services addObject:service]; service.delegate=self; [service resolveWithTimeout:5];
+  (void)browser; (void)more; NSLog(@"DCP-J315W discovery: service located"); [self.services addObject:service]; service.delegate=self;
+  [service scheduleInRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
+  [service resolveWithTimeout:5];
+}
+- (void)netServiceBrowser:(NSNetServiceBrowser *)browser didNotSearch:(NSDictionary *)error {
+  (void)browser; NSLog(@"DCP-J315W discovery: browse error %@",error[NSNetServicesErrorCode]);
+  self.discoveryError=@"Network discovery is unavailable. Check this app's Local Network permission in System Settings, or enter the printer's IPv4 address.";
+  self.status.stringValue=self.discoveryError;
+}
+- (void)netService:(NSNetService *)service didNotResolve:(NSDictionary *)error {
+  (void)service; NSLog(@"DCP-J315W discovery: resolve error %@",error[NSNetServicesErrorCode]);
 }
 - (void)netServiceDidResolveAddress:(NSNetService *)service {
   if (self.busy) return;
   NSDictionary *txt=[NSNetService dictionaryFromTXTRecordData:service.TXTRecordData ?: [NSData data]];
   NSString *model=[[NSString alloc] initWithData:txt[@"ty"] ?: [NSData data] encoding:NSUTF8StringEncoding];
   NSString *idText=[[NSString alloc] initWithData:txt[@"usb_MDL"] ?: [NSData data] encoding:NSUTF8StringEncoding];
-  BOOL matching=(model.length && [model caseInsensitiveCompare:@"Brother DCP-J315W"]==NSOrderedSame) || (idText.length && [idText caseInsensitiveCompare:@"DCP-J315W"]==NSOrderedSame);
+  BOOL matching=(model.length && [model caseInsensitiveCompare:@"Brother DCP-J315W"]==NSOrderedSame) || (idText.length && [idText caseInsensitiveCompare:@"DCP-J315W"]==NSOrderedSame) || [service.name caseInsensitiveCompare:@"Brother DCP-J315W"]==NSOrderedSame;
+  NSLog(@"DCP-J315W discovery: resolved (recognized=%d, addresses=%lu)",matching,(unsigned long)service.addresses.count);
   if (!matching) return;
   for (NSData *data in service.addresses) {
     if (data.length<sizeof(struct sockaddr_in)) continue;

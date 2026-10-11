@@ -15,7 +15,11 @@ for arch in arm64 x86_64; do
     -arch "$arch" -mmacosx-version-min=11.0 "$root/app/setup.m" -framework AppKit \
     -o "$root/build/setup-$arch"
 done
-lipo -create "$root/build/setup-arm64" "$root/build/setup-x86_64" -output "$app/Contents/MacOS/DCPJ315WSetup"
+binary_temp=$(mktemp "$app/Contents/MacOS/.DCPJ315WSetup.XXXXXX")
+trap 'rm -f "$binary_temp"' EXIT
+lipo -create "$root/build/setup-arm64" "$root/build/setup-x86_64" -output "$binary_temp"
+chmod 755 "$binary_temp"
+mv -f "$binary_temp" "$app/Contents/MacOS/DCPJ315WSetup"
 for arch in arm64 x86_64; do lipo "$app/Contents/MacOS/DCPJ315WSetup" -verify_arch "$arch"; done
 chmod 755 "$app/Contents/MacOS/DCPJ315WSetup" "$app/Contents/Resources/scripts/"*.sh
 if [[ -n ${APPLICATION_SIGN_IDENTITY:-} ]]; then
